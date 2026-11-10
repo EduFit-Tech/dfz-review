@@ -3,7 +3,7 @@
 #   게임 페이지에는 <!--@HISTORY@--> … <!--@/HISTORY@--> 와 <!--@REQUEST@--> … <!--@/REQUEST@--> 사이가 다시 쓰인다.
 # 바탕: HRYoon0/dfz 의 tools/build_review.py. 이 저장소는 공개라서 리뷰어에게 필요한 것만 싣는다 —
 #   비공개 저장소의 파일 경로·브랜치·커밋·PR 링크는 자료(games.json)에도 화면에도 두지 않는다.
-import datetime, html, json, pathlib, re
+import datetime, html, json, os, pathlib, re
 from collections import defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -15,7 +15,8 @@ E = html.escape
 
 # 수정 요청을 받는 Apps Script 웹앱 주소(apps-script/Code.gs를 조직 구글 계정에 배포한 것).
 # ★ 비어 있으면 요청 단추 대신 「준비 중」 글이 나온다. 배포한 뒤 data/games.json의 requestUrl에 적는다.
-REQUEST_URL = DATA.get("requestUrl", "")
+# 화면을 시험할 때만 환경 변수 DFZ_REVIEW_REQUEST_URL로 바꿔 끼운다(그렇게 만든 파일은 올리지 않는다).
+REQUEST_URL = os.environ.get("DFZ_REVIEW_REQUEST_URL") or DATA.get("requestUrl", "")
 PAGES = DATA["pages"]
 
 
@@ -69,6 +70,13 @@ REQUEST_CSS = """
 .req-mark{font-size:14px;font-weight:650;color:#13202F;background:#FFD66B;border-radius:999px;padding:3px 12px}
 .req-mark.done{background:var(--lime)}
 .req-soon{font-size:14px;color:var(--muted)}
+.opinions{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.opinions[hidden]{display:none}
+.op-h{font-size:14px;font-weight:700;color:var(--lime)}
+.op{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.op-meta{font-size:13px;color:var(--muted);font-weight:600}
+.op-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.op-reply{margin-top:6px;padding-left:10px;border-left:3px solid var(--lime);color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
 dialog.req-dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(520px,92vw)}
 dialog.req-dlg::backdrop{background:rgba(10,16,26,.6)}
 .req-dlg h3{margin:0 0 4px}
@@ -95,7 +103,20 @@ REQUEST_JS = """
     el.title = '마지막 요청 ' + g.last;
     el.classList.toggle('done', !!g.status); el.hidden = false;
   }
-  function load(){ fetchJSON(URL_ + '?action=list').then(function(r){ if (r && r.ok) Object.keys(r.games).forEach(function(k){ mark(k, r.games[k]); }); }).catch(function(){}); }
+  // 팀이 공개로 표시한 의견만 온다. 글은 textContent로만 넣는다 — 보낸 글이 화면 코드가 되지 않게.
+  function line(cls, text){ var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
+  function render(slug, g){
+    var box = document.querySelector('.opinions[data-slug="' + slug + '"]'); if (!box) return;
+    var list = (g && g.public) || []; box.textContent = ''; box.hidden = !list.length; if (!list.length) return;
+    box.appendChild(line('op-h', '공개된 의견 ' + list.length + '건'));
+    list.forEach(function(o){
+      var d = document.createElement('div'); d.className = 'op';
+      d.appendChild(line('op-meta', [o.name, o.at, o.status].filter(Boolean).join(' · ')));
+      d.appendChild(line('op-text', o.text));
+      if (o.reply) d.appendChild(line('op-reply', '팀의 답: ' + o.reply));
+      box.appendChild(d); });
+  }
+  function load(){ fetchJSON(URL_ + '?action=list').then(function(r){ if (r && r.ok) Object.keys(r.items).forEach(function(k){ mark(k, r.items[k]); render(k, r.items[k]); }); }).catch(function(){}); }
   var dlg = document.getElementById('req-dlg'), form = dlg.querySelector('form'), msg = dlg.querySelector('.msg'), send = dlg.querySelector('.send'), W = form.elements, cur = null;
   document.querySelectorAll('.req-btn').forEach(function(b){ b.addEventListener('click', function(){
     cur = b.closest('.req').dataset; dlg.querySelector('.game').textContent = cur.title; msg.textContent = ''; send.disabled = false; send.textContent = '보내기';
@@ -126,6 +147,7 @@ REQUEST_DIALOG = """<dialog class="req-dlg" id="req-dlg" aria-labelledby="req-h"
 <form method="dialog">
 <h3 id="req-h">의견 보내기</h3>
 <div class="game" style="font-weight:700"></div>
+<p class="hint" style="margin:8px 0 0;font-size:13px;color:var(--muted)">보내신 의견은 팀이 확인한 뒤 이 페이지에 공개될 수 있습니다. 실명·연락처·학생 이야기는 적지 마세요.</p>
 <label>보내는 사람(선택)<span class="hint">별명이나 소속만 적어 주세요. 실명·연락처는 적지 마세요.</span><input name="who" maxlength="40" autocomplete="off"></label>
 <label>의견<textarea name="note" maxlength="1000" required placeholder="좋은 점, 고칠 점, 궁금한 점을 적어 주세요"></textarea></label>
 <div class="row"><span class="msg" role="status"></span><button type="button" class="cancel">취소</button><button type="submit" class="send">보내기</button></div>
@@ -157,7 +179,8 @@ def change_card(c, area_name):
             f'<div class="top"><span class="stage {cls}">{label}</span><span class="area">{E(area_name)}</span>'
             f'<span class="when">{E(c["date"])}</span><span class="no">항목 {c["id"]}</span></div>'
             f'<h3>{E(c["title"])}</h3><p>{E(c["summary"])}</p>{ask}'
-            f'<div class="foot">{demo}{req_div(g, "의견 보내기", "#" + slug)}</div></li>')
+            f'<div class="foot">{demo}{req_div(g, "의견 보내기", "#" + slug)}</div>'
+            f'<div class="opinions" data-slug="{slug}" hidden></div></li>')
 
 
 FILTER_JS = """
@@ -225,7 +248,7 @@ def build_index():
 <body>
 <main>
 <h1>디지털 핏 존 개발 리뷰</h1>
-<p class="lead">디지털 핏 존 팀이 만들고 고치는 것을 보고 의견을 주시는 곳입니다. 항목마다 무엇이 달라지는지 적었고, 게임은 브라우저에서 해 보는 체험판이 있습니다. 「반영 전」은 만들었지만 아직 반영하지 않은 것이고 「반영됨」은 이미 반영한 것입니다. 반영 전 항목은 의견을 반영하기 쉽습니다. 의견이 있으면 항목의 「의견 보내기」를 눌러 주세요. 보내신 내용은 개발 팀만 보고, 이 페이지에는 의견이 들어온 날짜와 건수만 표시됩니다. 체험판은 앱과 같은 규칙으로 따로 만든 것이라 그림과 조작이 실제 앱과 조금 다를 수 있습니다.</p>
+<p class="lead">디지털 핏 존 팀이 만들고 고치는 것을 보고 의견을 주시는 곳입니다. 항목마다 무엇이 달라지는지 적었고, 게임은 브라우저에서 해 보는 체험판이 있습니다. 「반영 전」은 만들었지만 아직 반영하지 않은 것이고 「반영됨」은 이미 반영한 것입니다. 반영 전 항목은 의견을 반영하기 쉽습니다. 의견이 있으면 항목의 「의견 보내기」를 눌러 주세요. 보내신 내용은 개발 팀만 보고, 이 팀이 확인한 의견은 항목 아래에 공개되고, 그 밖의 의견은 들어온 날짜와 건수만 표시됩니다. 체험판은 앱과 같은 규칙으로 따로 만든 것이라 그림과 조작이 실제 앱과 조금 다를 수 있습니다.</p>
 <div class="search"><input type="search" id="q" placeholder="찾기 — 게임 이름, 낱말" aria-label="항목 찾기"><span class="count" id="q-count"></span></div>
 <div class="chips" data-kind="area">{area_chips}</div>
 <div class="chips" data-kind="state">{state_chips}</div>
@@ -243,11 +266,19 @@ def build_index():
     (ROOT / "index.html").write_text(page, encoding="utf-8", newline="\n")
 
 
+def item_of(g):
+    """게임 → 그 게임의 개발 항목(가장 새 것). 없으면 게임 자신의 이름으로 받는다."""
+    hits = sorted((c for c in CHANGES["changes"] if c.get("game") == g["slug"]), key=lambda c: (c["date"], c["id"]), reverse=True)
+    return {"slug": f'c{hits[0]["id"]}', "title": hits[0]["title"]} if hits else g
+
+
 def request_block(g):
-    """게임 페이지 머리의 「수정 요청」 — 목록과 같은 웹앱·같은 창."""
+    """게임 페이지 머리의 「의견 보내기」 — 목록과 같은 웹앱·같은 창·같은 항목 ID."""
+    it = item_of(g)
     tail = f'{REQUEST_DIALOG}\n<script>{REQUEST_JS}</script>\n' if REQUEST_URL else ""
     return (f'<!--@REQUEST@-->\n<style>{REQUEST_CSS}</style>\n'
-            f'{req_div(g, "이 게임에 의견 보내기", page_of(g), " style=" + chr(34) + "margin:14px 0 0" + chr(34))}\n'
+            f'{req_div(it, "이 게임에 의견 보내기", page_of(g), " style=" + chr(34) + "margin:14px 0 0" + chr(34))}\n'
+            f'<div class="opinions" data-slug="{E(it["slug"])}" hidden></div>\n'
             f'{tail}<!--@/REQUEST@-->')
 
 

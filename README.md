@@ -15,6 +15,7 @@
 | `data/changes.json` | 개발 항목의 원본 — 리뷰어용 요약 |
 | `data/games.json` | 게임 페이지의 원본 — 설명과 바뀐 기록 |
 | `tools/build_review.py` | 위 두 자료로 페이지를 다시 만든다 |
+| `apps-script/` | 의견 받기 스크립트와 켜는 법 |
 
 ## 고치는 법
 
@@ -22,6 +23,6 @@
 2. `python -I tools/build_review.py`
 3. 올리기 전에 내부 정보가 없는지 확인한다.
 
-의견 받기는 `data/games.json`의 `requestUrl`에 받을 주소를 적으면 켜집니다. 비어 있으면 「준비 중」으로 표시됩니다.
+의견 받기는 `apps-script/README.md`의 순서로 켭니다. 받은 의견은 팀이 시트에서 「공개」로 표시한 것만 페이지에 나옵니다.
 
 체험판 페이지와 생성 도구의 바탕은 HRYoon0/dfz 의 `review/`입니다.
