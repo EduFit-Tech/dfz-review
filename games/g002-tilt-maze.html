@@ -100,8 +100,69 @@ dialog.req-dlg::backdrop{background:rgba(10,16,26,.6)}
 .req-dlg .row button.send{background:var(--lime);color:#13202F;border-color:var(--lime)}
 .req-dlg .msg{margin-right:auto;font-size:14px;color:#FFB4A8}
 </style>
-<div class="req" data-slug="c44" data-title="새 게임 「G002 몸으로 탈출! 기울기 미로」" data-page="games/g002-tilt-maze.html" style="margin:14px 0 0"><span class="req-soon">의견 받기는 준비 중입니다.</span></div>
+<div class="req" data-slug="c44" data-title="새 게임 「G002 몸으로 탈출! 기울기 미로」" data-page="games/g002-tilt-maze.html" style="margin:14px 0 0"><span class="req-mark" hidden></span><button type="button" class="req-btn">이 게임에 의견 보내기</button></div>
 <div class="opinions" data-slug="c44" hidden></div>
+<dialog class="req-dlg" id="req-dlg" aria-labelledby="req-h">
+<form method="dialog">
+<h3 id="req-h">의견 보내기</h3>
+<div class="game" style="font-weight:700"></div>
+<p class="hint" style="margin:8px 0 0;font-size:13px;color:var(--muted)">보내신 의견은 팀이 확인한 뒤 이 페이지에 공개될 수 있습니다. 실명·연락처·학생 이야기는 적지 마세요.</p>
+<label>보내는 사람(선택)<span class="hint">별명이나 소속만 적어 주세요. 실명·연락처는 적지 마세요.</span><input name="who" maxlength="40" autocomplete="off"></label>
+<label>의견<textarea name="note" maxlength="1000" required placeholder="좋은 점, 고칠 점, 궁금한 점을 적어 주세요"></textarea></label>
+<div class="row"><span class="msg" role="status"></span><button type="button" class="cancel">취소</button><button type="submit" class="send">보내기</button></div>
+</form>
+</dialog>
+<script>
+(function(){
+  var URL_ = "https://script.google.com/macros/s/AKfycbxBTcvy_kIgqEHmUWjNFZ_Rv4vBDPWOPK2rRrRjEIyyGAoFGieR5vyM-Y22yRlTxqUdZQ/exec", PAGES = "https://edufit-tech.github.io/dfz-review/";
+  // 응답이 없을 때 「보내는 중」이 영원히 돌지 않게 15초에 끊는다
+  function fetchJSON(url, opts, ms){ var c = new AbortController(), t = setTimeout(function(){ c.abort(); }, ms || 15000);
+    return fetch(url, Object.assign({}, opts, { signal: c.signal })).then(function(r){ return r.json(); }).finally(function(){ clearTimeout(t); }); }
+  function mark(slug, g){
+    var el = document.querySelector('.req[data-slug="' + slug + '"] .req-mark'); if (!el || !g || !g.count) return;
+    var day = String(g.last || '').slice(0, 10);
+    el.textContent = (g.status ? g.status + ' · ' : '의견 있음 · ') + day + (g.count > 1 ? ' (' + g.count + '건)' : '');
+    el.title = '마지막 요청 ' + g.last;
+    el.classList.toggle('done', !!g.status); el.hidden = false;
+  }
+  // 팀이 공개로 표시한 의견만 온다. 글은 textContent로만 넣는다 — 보낸 글이 화면 코드가 되지 않게.
+  function line(cls, text){ var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
+  function render(slug, g){
+    var box = document.querySelector('.opinions[data-slug="' + slug + '"]'); if (!box) return;
+    var list = (g && g.public) || []; box.textContent = ''; box.hidden = !list.length; if (!list.length) return;
+    box.appendChild(line('op-h', '공개된 의견 ' + list.length + '건'));
+    list.forEach(function(o){
+      var d = document.createElement('div'); d.className = 'op';
+      d.appendChild(line('op-meta', [o.name, o.at, o.status].filter(Boolean).join(' · ')));
+      d.appendChild(line('op-text', o.text));
+      if (o.reply) d.appendChild(line('op-reply', '팀의 답: ' + o.reply));
+      box.appendChild(d); });
+  }
+  function load(){ fetchJSON(URL_ + '?action=list').then(function(r){ if (r && r.ok) Object.keys(r.items).forEach(function(k){ mark(k, r.items[k]); render(k, r.items[k]); }); }).catch(function(){}); }
+  var dlg = document.getElementById('req-dlg'), form = dlg.querySelector('form'), msg = dlg.querySelector('.msg'), send = dlg.querySelector('.send'), W = form.elements, cur = null;
+  document.querySelectorAll('.req-btn').forEach(function(b){ b.addEventListener('click', function(){
+    cur = b.closest('.req').dataset; dlg.querySelector('.game').textContent = cur.title; msg.textContent = ''; send.disabled = false; send.textContent = '보내기';
+    form.reset(); var n = localStorage.getItem('dfz-req-name'); if (n) W.who.value = n; dlg.showModal(); W.note.focus(); }); });
+  dlg.querySelector('.cancel').addEventListener('click', function(){ dlg.close(); });
+  form.addEventListener('submit', function(e){
+    e.preventDefault(); if (!cur) return;
+    var text = W.note.value.trim(); if (text.length < 2) { msg.textContent = '의견을 적어 주세요.'; return; }
+    send.disabled = true; send.textContent = '보내는 중…'; msg.textContent = '';
+    localStorage.setItem('dfz-req-name', W.who.value.trim());
+    // text/plain — 브라우저가 사전 요청(OPTIONS)을 보내지 않게(Apps Script는 그것을 받지 못한다)
+    fetchJSON(URL_, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ slug: cur.slug, title: cur.title, page: PAGES + cur.page, name: W.who.value.trim(), text: text }) })
+      .then(function(r){
+        if (!r || !r.ok) throw new Error(r && r.error || 'fail');
+        dlg.close(); load();
+        mark(cur.slug, { count: 1, last: r.at, status: '' });
+      })
+      .catch(function(err){ send.disabled = false; send.textContent = '다시 보내기';
+        msg.textContent = String(err.message) === 'rate-limit' ? '요청이 몰렸어요. 10분 뒤 다시 보내 주세요.' : '보내지 못했어요. 다시 보내 주세요.'; });
+  });
+  load();
+})();
+</script>
 <!--@/REQUEST@-->
 
   <h2>바뀐 기록</h2>
