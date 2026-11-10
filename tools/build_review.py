@@ -147,10 +147,10 @@ def page_of(g):
 
 def change_card(c, area_name):
     """개발 항목 한 칸 — 쉬운 요약, 봐 주셨으면 하는 것, 체험판 링크, 의견 보내기."""
-    label, cls = ("들어감", "app") if c["state"] == "done" else ("검토 중", "review")
+    label, cls = ("반영됨", "app") if c["state"] == "done" else ("반영 전", "review")
     slug = f'c{c["id"]}'
     ask = f'<p class="ask"><b>봐 주셨으면 하는 것</b> {E(c["ask"])}</p>' if c.get("ask") else ""
-    demo = f'<a class="demo" href="games/{E(c["game"])}.html">체험판 해 보기</a>' if c.get("game") else ""
+    demo = f'<a class="demo" href="games/{E(c["game"])}.html">브라우저에서 해 보기</a>' if c.get("game") else ""
     q = " ".join([c["title"], c["summary"], area_name, label, str(c["id"])]).lower()
     g = {"slug": slug, "title": c["title"]}
     return (f'<li class="chg" id="{slug}" data-area="{E(c["area"])}" data-state="{cls}" data-q="{E(q)}">'
@@ -210,8 +210,8 @@ def build_index():
         f'<button type="button" data-v="{E(a["key"])}" aria-pressed="false">{E(a["name"])} {sum(1 for c in items if c["area"] == a["key"])}</button>' for a in used)
     n_review = sum(1 for c in items if c["state"] != "done")
     state_chips = (f'<button type="button" data-v="" aria-pressed="true">전체 {len(items)}</button>'
-                   f'<button type="button" data-v="review" aria-pressed="false">검토 중 {n_review}</button>'
-                   f'<button type="button" data-v="app" aria-pressed="false">들어감 {len(items) - n_review}</button>')
+                   f'<button type="button" data-v="review" aria-pressed="false">반영 전 {n_review}</button>'
+                   f'<button type="button" data-v="app" aria-pressed="false">반영됨 {len(items) - n_review}</button>')
     page = f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -225,7 +225,7 @@ def build_index():
 <body>
 <main>
 <h1>디지털 핏 존 개발 리뷰</h1>
-<p class="lead">디지털 핏 존 팀이 만들고 고치는 것을 보고 의견을 주시는 곳입니다. 항목마다 무엇이 달라지는지 적었고, 게임은 브라우저에서 해 보는 체험판이 있습니다. 「검토 중」은 아직 앱에 들어가지 않은 것이고 「들어감」은 이미 들어간 것입니다. 의견이 있으면 항목의 「의견 보내기」를 눌러 주세요. 보내신 내용은 개발 팀만 보고, 이 페이지에는 의견이 들어온 날짜와 건수만 표시됩니다. 체험판은 앱과 같은 규칙으로 따로 만든 것이라 그림과 조작이 실제 앱과 조금 다를 수 있습니다.</p>
+<p class="lead">디지털 핏 존 팀이 만들고 고치는 것을 보고 의견을 주시는 곳입니다. 항목마다 무엇이 달라지는지 적었고, 게임은 브라우저에서 해 보는 체험판이 있습니다. 「반영 전」은 만들었지만 아직 반영하지 않은 것이고 「반영됨」은 이미 반영한 것입니다. 반영 전 항목은 의견을 반영하기 쉽습니다. 의견이 있으면 항목의 「의견 보내기」를 눌러 주세요. 보내신 내용은 개발 팀만 보고, 이 페이지에는 의견이 들어온 날짜와 건수만 표시됩니다. 체험판은 앱과 같은 규칙으로 따로 만든 것이라 그림과 조작이 실제 앱과 조금 다를 수 있습니다.</p>
 <div class="search"><input type="search" id="q" placeholder="찾기 — 게임 이름, 낱말" aria-label="항목 찾기"><span class="count" id="q-count"></span></div>
 <div class="chips" data-kind="area">{area_chips}</div>
 <div class="chips" data-kind="state">{state_chips}</div>
