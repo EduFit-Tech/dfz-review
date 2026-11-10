@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>G017 정답 두더지 잡기 — 디지털 핏 존 게임 리뷰</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#202B3D; --surface:#30435A; --line:#46607E; --ink:#F4F8FF; --muted:#CCDCE9;
+  --lime:#D1F58E; --coral:#FF8A7A; --sun:#FFD66B;
+  --font:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-weight:450;line-height:1.65;font-size:16px}
+main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.2;margin:0 0 8px;font-weight:800}
+h2{font-size:22px;margin:44px 0 12px;font-weight:750;padding-top:8px;border-top:1px solid var(--line)}
+p{margin:0 0 12px}
+a{color:var(--lime)}
+.lead{color:var(--muted);max-width:46em}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
+.chip b{color:var(--lime)}
+code{font-family:Consolas,'D2Coding',Menlo,monospace;font-size:.92em;background:#18212F;border:1px solid var(--line);border-radius:5px;padding:0 5px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:13px;font-weight:700}
+.wrap{overflow-x:auto}
+.demo{background:#141C29;border:1px solid var(--line);border-radius:14px;padding:12px}
+.demo canvas{display:block;width:100%;aspect-ratio:16/9;border-radius:10px;background:#1B2536;touch-action:none;cursor:pointer}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.controls button{font:inherit;font-weight:650;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 14px;cursor:pointer}
+.controls button[aria-pressed="true"]{background:var(--lime);color:#13202F;border-color:var(--lime)}
+.score{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:14px;font-weight:600}
+.score span{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px 10px;font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:14px}
+.ok{color:var(--lime);font-weight:700}
+.no{color:var(--coral);font-weight:700}
+ol li,ul li{margin-bottom:6px}
+.back{display:inline-block;margin-bottom:14px;font-weight:650;text-decoration:none}
+ul.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ul.log li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px}
+ul.log .when{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+ul.log .sha{font-family:Consolas,Menlo,monospace;font-size:14px}
+@media (max-width:640px){ul.log li{grid-template-columns:minmax(0,1fr)}}
+
+.stagewrap{position:relative}
+.start{position:absolute;inset:0;border-radius:10px;background:#1B2536;display:grid;grid-template-columns:1.15fr .85fr;gap:20px;padding:22px 26px;overflow:auto;align-content:start}
+.start[hidden]{display:none}
+.start .eyebrow{color:var(--lime);font-weight:800;font-size:13px;letter-spacing:1px}
+.start h3{font-size:clamp(22px,2.6vw,32px);margin:4px 0 6px;font-weight:800;line-height:1.2}
+.start .lead2{margin:0 0 8px;color:var(--muted);font-size:15px;line-height:1.55}
+.start .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.start .tags span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:650}
+.start .how{background:#141C29;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.start .how b{font-size:14px}
+.start ol{margin:6px 0 0;padding-left:20px;font-size:15px;line-height:1.5}
+.start ol li{margin-bottom:3px}
+.start .set{display:grid;gap:12px;align-content:start}
+.start .set h4{margin:0;font-size:17px;font-weight:800}
+.start .opt>span{display:block;font-weight:700;font-size:14px;margin-bottom:4px;color:var(--muted)}
+.start .opt .controls{margin:0}
+.start .go{font:inherit;font-weight:800;font-size:18px;background:var(--lime);color:#13202F;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+.start .safe{font-size:13px;color:var(--muted);background:#141C29;border:1px solid var(--line);border-radius:10px;padding:8px 10px;line-height:1.5;margin:0}
+@media (max-width:760px){.start{position:static;grid-template-columns:1fr;margin-bottom:10px}}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../">← 목록으로</a>
+  <h1>G017 정답 두더지 잡기</h1>
+  <p class="lead">위쪽 문제판에 문제가 나오면 구멍에서 보기를 든 두더지가 올라옵니다. 정답 두더지를 손으로 잡으세요. 아래에는 모둠마다 자기 색 콩콩이가 서서, 자기 모둠이 정답을 잡으면 환호하고 오답이면 아쉬워합니다. 망치 손잡이의 동그라미도 모둠 색입니다.</p>
+
+  <!--@REQUEST@-->
+<style>
+.req{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.req-btn{font:inherit;font-weight:700;font-size:14px;background:var(--bg);color:var(--ink);border:1px solid var(--lime);border-radius:999px;padding:5px 14px;cursor:pointer}
+.req-btn:hover{background:var(--lime);color:#13202F}
+.req-mark{font-size:14px;font-weight:650;color:#13202F;background:#FFD66B;border-radius:999px;padding:3px 12px}
+.req-mark.done{background:var(--lime)}
+.req-soon{font-size:14px;color:var(--muted)}
+dialog.req-dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(520px,92vw)}
+dialog.req-dlg::backdrop{background:rgba(10,16,26,.6)}
+.req-dlg h3{margin:0 0 4px}
+.req-dlg label{display:grid;gap:4px;margin-top:12px;font-weight:650;font-size:14px;color:var(--muted)}
+.req-dlg .hint{font-weight:450;font-size:13px}
+.req-dlg input,.req-dlg textarea{font:inherit;font-weight:450;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.req-dlg textarea{min-height:130px;resize:vertical}
+.req-dlg .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;align-items:center}
+.req-dlg .row button{font:inherit;font-weight:700;border-radius:10px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.req-dlg .row button.send{background:var(--lime);color:#13202F;border-color:var(--lime)}
+.req-dlg .msg{margin-right:auto;font-size:14px;color:#FFB4A8}
+</style>
+<div class="req" data-slug="g017-answer-mole" data-title="G017 정답 두더지 잡기" data-page="games/g017-answer-mole.html" style="margin:14px 0 0"><span class="req-soon">의견 받기는 준비 중입니다.</span></div>
+<!--@/REQUEST@-->
+
+  <h2>바뀐 기록</h2>
+  <!--@HISTORY@-->
+<ul class="log">
+<li><span class="when">2026-11-06 12:29</span><span>모둠마다 자기 색 콩콩이 — 자기 모둠이 정답을 잡으면 환호·오답이면 아쉬움·손이 보이면 만세, 끝나면 1등 모둠만 환호</span></li>
+<li><span class="when">2026-11-06 12:19</span><span>모둠 차례전 → 모둠 동시 진행 — 모든 모둠이 한 판·같은 문제로 60초 함께, 정답은 먼저 0.3초를 채운 손이 가져감, 모둠 점수판·손 동그라미 모둠 색, 쉬는 시간 없앰(경기 130초 → 62초). 체험판에 다른 모둠 자동 손</span></li>
+<li><span class="when">2026-11-06 11:20</span><span>두더지(올라옴·잡힘·메롱)와 장난감 망치를 GPT로 그려 오린 그림으로 — 구멍에서 올라오게 흙선 아래를 잘라 보임, 그림이 없으면 코드 도형</span></li>
+<li><span class="when">2026-11-06 11:06</span><span>처음 변환 — 카메라 손목으로 손 대고 0.3초 잡기, 모둠 차례전(차례 모둠 손만), 정답 +10·보너스·오답 −5, 문항 세트 넷, 봄 농장 밭 배경(GPT)</span></li>
+</ul>
+<!--@/HISTORY@-->
+
+  <h2>직접 해 보기</h2>
+  <!--start-screen-->
+<p class="note">C# 판정과 같은 규칙과 숫자(구멍 9개, 보통 1.25초·최대 3마리·간격 0.72초, 손 대고 0.3초, 정답 +10 + 빠르기 보너스, 오답 −5, 모든 모둠이 함께 60초)로 움직입니다. 원본처럼 <b>시작 화면</b>에서 모둠 수·난이도·문항 세트를 고르고 시작합니다. 카메라 손 대신 <b>마우스(또는 손가락)</b>가 고른 모둠의 손이고, 나머지 모둠은 <b>자동 손</b>(체험판에만 있는 흉내, 0.6~1.5초 머뭇거린 뒤 대개 정답을 노림)이 같은 판에서 동시에 잡습니다. 하얀 원이 다 차면 잡히고, 먼저 채운 손이 가져갑니다. 「경기 20초」로 짧게 볼 수 있습니다.</p>
+  <div class="demo">
+    <div class="stagewrap">
+      <canvas id="cv" width="1600" height="900" aria-label="정답 두더지 잡기 체험판"></canvas>
+      <div class="start" id="start">
+        <div>
+          <div class="eyebrow">G017 · 체육 · 모둠 대항</div>
+          <h3>정답 두더지 잡기</h3>
+          <p class="lead2">위쪽 문제판에 문제가 나오면 구멍에서 보기를 든 두더지가 올라옵니다. 정답 두더지를 손으로 잡으세요. 아래에는 모둠마다 자기 색 콩콩이가 서서, 자기 모둠이 정답을 잡으면 환호하고 오답이면 아쉬워합니다. 망치 손잡이의 동그라미도 모둠 색입니다.</p>
+          <div class="how"><b>진행 방법</b>
+            <ol>
+              <li>카메라 앞에 서서 두 손을 듭니다. 손 자리에 망치가 따라다닙니다.</li>
+              <li>정답 두더지 위에 손을 대고 하얀 원이 다 찰 때(0.3초)까지 기다리면 잡힙니다. 정답 +10점, 빨리 잡을수록 보너스!</li>
+              <li>오답 두더지를 잡으면 −5점입니다(0점 밑으로는 안 내려갑니다).</li>
+              <li>모든 모둠이 한 판에서 60초 동안 동시에 겨룹니다. 정답 두더지는 한 마리라 먼저 잡은 모둠이 점수를 얻고, 마지막에 모둠 점수로 순위를 봅니다.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="set">
+          <h4>경기 설정</h4>
+          <div class="opt"><span>모둠 수</span><div class="controls">
+            <button data-teams="2" aria-pressed="true">2모둠</button>
+            <button data-teams="3" aria-pressed="false">3모둠</button>
+            <button data-teams="4" aria-pressed="false">4모둠</button>
+          </div></div>
+          <div class="opt"><span>난이도</span><div class="controls">
+            <button data-mode="easy" aria-pressed="false">쉬움 · 1.5초 · 2마리</button>
+            <button data-mode="normal" aria-pressed="true">보통 · 1.25초 · 3마리</button>
+            <button data-mode="hard" aria-pressed="false">어려움 · 1초 · 4마리</button>
+          </div></div>
+          <div class="opt"><span>문항 세트</span><div class="controls">
+            <button data-set="0" aria-pressed="true">구구단</button>
+            <button data-set="1" aria-pressed="false">영어 단어</button>
+            <button data-set="2" aria-pressed="false">맞춤법</button>
+            <button data-set="3" aria-pressed="false">체육 용어</button>
+          </div></div>
+          <div class="opt"><span>경기 시간</span><div class="controls">
+            <button data-turn="60" aria-pressed="true">60초(앱)</button>
+            <button data-turn="20" aria-pressed="false">20초(빨리 보기)</button>
+          </div></div>
+          <div class="opt"><span>마우스 손</span><div class="controls">
+            <button data-mine="0" aria-pressed="true">파랑 모둠</button>
+            <button data-mine="1" aria-pressed="false">빨강 모둠</button>
+          </div></div>
+          <div class="opt"><span>다른 모둠</span><div class="controls">
+            <button data-bots="1" aria-pressed="true">자동 손</button>
+            <button data-bots="0" aria-pressed="false">없음</button>
+          </div></div>
+          <button class="go" id="go">경기 시작</button>
+          <p class="safe"><b>안전</b> 옆 사람과 팔 간격 비우기 · 한 번에 최대 6명</p>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="home" hidden>처음 화면</button>
+      <button id="restart" style="margin-left:auto">다시</button>
+    </div>
+    <div class="score" id="score"></div>
+  </div>
+
+  <h2>원본에서 달라진 것</h2>
+  <div class="wrap"><table>
+    <tr><th>HTML판</th><th>앱판</th><th>까닭</th></tr>
+    <tr><td>웹캠 손 인식(MediaPipe, 손가락까지)</td><td><b>앱 카메라 골격의 손목</b>. 손목 둘(왼손·오른손)이 손 자리</td><td>앱은 몸 골격만 본다. 범위 「보통」(1.3배)은 그대로</td></tr>
+    <tr><td>잡는 동작: 손 대고 0.3초 / 주먹 쥐기</td><td><b>손 대고 0.3초만</b></td><td>골격에는 손가락이 없어 주먹을 알 수 없다</td></tr>
+    <tr><td>터치·마우스(전자칠판)로도 잡기</td><td>옮기지 않음</td><td>앱에는 화면 터치 입력이 없다</td></tr>
+    <tr><td>모둠마다 한 명이 나와 릴레이, 「시작」 단추와 3·2·1</td><td><b>모둠 동시 진행</b>(앱 모둠 기능): 모든 모둠이 한 판·같은 문제로 60초 동안 함께. 손 동그라미가 모둠 색, 정답은 먼저 0.3초를 채운 손이 가져감. 시작 전 세기는 앱 몫</td><td>기획 「모둠이 동시 진행되도록」(11-06, 처음엔 차례전이었다). 차례·쉬는 시간이 없어 경기가 짧아짐(2모둠 130초 → 62초)</td></tr>
+    <tr><td>모둠 점수(0점 밑으로 안 감)</td><td>잡은 사람 점수로 붙고 앱이 모둠 합계로. 0점 바닥은 사람마다</td><td>앱 점수표가 사람 점수를 0 밑으로 안 내린다</td></tr>
+    <tr><td>정답 +10 + 보너스(10 − 지난 초)</td><td>정답 Touch +10, 보너스는 Press +1을 보너스만큼, 오답 Shake −5</td><td>앱 규칙 파일은 동작마다 점수가 정해져 있다</td></tr>
+    <tr><td>설정: 구멍 6·9·12, 45·60초, 문항 세트 넷</td><td>게임 설정으로 고름(지금은 9개·60초·구구단)</td><td>설정은 게임마다 미리 정해 둔다</td></tr>
+    <tr><td>사람 캐릭터(팔이 손을 따라옴), 두더지·망치는 코드 도형</td><td>모둠마다 자기 색 콩콩이(자기 모둠 정답에 환호·오답에 아쉬움, 끝나면 1등 모둠이 환호). <b>두더지(올라옴·잡힘·메롱)와 장난감 망치는 GPT로 그려 오린 그림</b>, 그림이 없으면 코드 도형</td><td>앱 기본 캐릭터. 팔은 그리지 않음</td></tr>
+    <tr><td>배경 내 모습 흐리게</td><td>옮기지 않음, 대신 봄 농장 밭 배경 그림</td><td>카메라 화면을 저장·표시하지 않는 앱 규칙</td></tr>
+  </table></div>
+  <p class="note">그대로 옮긴 것: 구멍 배치(6·9·12), 난이도 세 단계 값, 올라온 시간 ×0.9~1.1, 정답이 2.2초 넘게 안 나왔으면 꼭 정답·아니면 38%, 같은 보기 겹침 없음, 정답 하나만, 정답을 잡으면 나머지 내려가고 0.45초 뒤 다음 문제·0.55초 새 두더지 없음, 올라온 정도 45% 넘어야 잡힘, 잡는 자리 모양, 문항 세트 넷(구구단·영어 단어·맞춤법·체육 용어), 모둠 색 넷.</p>
+
+  <h2>실물에서 봐 주셨으면 하는 것</h2>
+  <ul>
+    <li><b>손이 닿는 높이</b> — 손목 좌표를 원본처럼 가운데에서 1.3배 넓혔습니다. 교실 카메라 자리에서 위 줄 구멍까지 팔이 닿는지, 너무 예민하지 않은지.</li>
+    <li><b>여러 모둠이 한 화면에</b> — 카메라 한도 6명이 다 서면 서로 팔이 겹치는지, 손목이 다른 사람과 바뀌어 잡히지 않는지. 3모둠·4모둠이면 모둠마다 1~2명만 설 수 있습니다.</li>
+    <li><b>두더지가 흙 위에서 보이는지</b> — 갈색 두더지 그림과 갈색 밭 배경. 그림에 짙은 윤곽이 있고 팻말이 크게 떠 있지만 교실 화면에서 확인이 필요합니다. 두더지 크기(구멍 반지름의 3.2배)도 손잡이 값입니다.</li>
+    <li>한 판에서 먼저 잡기 경쟁이라 화면 가운데 구멍에 손이 몰리는지, 두더지 마릿수(보통 최대 3)를 늘려야 하는지.</li>
+  </ul>
+</main>
+<script>
+/* 콩콩이 — HRYoon0/dfz templates/buddy.js 그대로 */
+var Buddy = (function () {
+  'use strict';
+  var POSES = ['idle', 'raise', 'squat', 'jump', 'lean', 'cheer', 'oops'];
+  var ink = '#13202F';
+  var rim = 'rgba(255,255,255,.55)';
+  function oval(c, x, y, rx, ry, fill, edge) {
+    c.beginPath();
+    c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    c.fillStyle = fill;
+    c.fill();
+    if (edge) { c.strokeStyle = edge; c.stroke(); }
+  }
+  function line(c, points, color, width) {
+    c.beginPath();
+    c.moveTo(points[0], points[1]);
+    for (var i = 2; i < points.length; i += 2) c.lineTo(points[i], points[i + 1]);
+    c.strokeStyle = color;
+    c.lineWidth = width;
+    c.stroke();
+  }
+  function body(c) {
+    c.beginPath();
+    c.moveTo(-29, -48);
+    c.bezierCurveTo(-29, -73, -15, -87, 1, -87);
+    c.bezierCurveTo(21, -87, 30, -69, 29, -51);
+    c.bezierCurveTo(39, -24, 23, -9, 1, -10);
+    c.bezierCurveTo(-24, -8, -39, -23, -29, -48);
+    c.closePath();
+  }
+  /* 발바닥 중앙이 원점인 높이 100의 설계 좌표. 모든 변형은 호출 안에서 복원한다. */
+  function draw(ctx, o) {
+    o = o || {};
+    var size = Number(o.size);
+    if (!(size > 0) || !isFinite(size)) return;
+    var pose = POSES.indexOf(o.pose) >= 0 ? o.pose : 'idle';
+    var t = typeof o.t === 'number' && isFinite(o.t) ? o.t : 0;
+    var color = o.color || '#D1F58E';
+    var mood = o.mood || (pose === 'oops' ? 'sad' : pose === 'idle' || pose === 'lean' || pose === 'squat' ? 'calm' : 'happy');
+    var breath = Math.sin(t / 650) * .012;
+    var blink = t > 0 && t % 3900 > 3750;
+    var crouch = pose === 'squat';
+    var airborne = pose === 'jump';
+    var angle = pose === 'lean' ? Math.max(-1, Math.min(1, Number(o.lean) || 0)) * .32 : pose === 'oops' ? Math.sin(t / 180) * .045 : 0;
+    ctx.save();
+    try {
+      ctx.translate(Number(o.x) || 0, Number(o.y) || 0);
+      ctx.scale(size / 100, size / 100);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.translate(0, airborne ? -10 - (1 + Math.sin(t / 240)) * 2 : 0);
+      ctx.rotate(angle);
+      ctx.scale(crouch ? 1.12 : 1 - breath / 2, crouch ? .73 : 1 + breath);
+      ctx.lineWidth = 2.2;
+      oval(ctx, -15, -6, 9, 5, color, rim);
+      oval(ctx, 15, -6, 9, 5, color, rim);
+      /* 팔은 몸 뒤에서 연결하고 둥근 끝을 사용한다. */
+      var lifted = pose === 'raise' || pose === 'cheer' || airborne;
+      [-1, 1].forEach(function (side) {
+        var endY = lifted ? (pose === 'raise' ? -80 : -68) : crouch ? -22 : -30;
+        line(ctx, [side * 25, -48, side * 39, endY], rim, 13);
+        line(ctx, [side * 25, -48, side * 39, endY], color, 9);
+      });
+      body(ctx);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.save();
+      try {
+        ctx.clip();
+        oval(ctx, 0, -10, 38, 12, 'rgba(0,0,0,.18)');
+      } finally { ctx.restore(); }
+      body(ctx);
+      ctx.strokeStyle = rim;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      /* 짧은 새싹 한 개와 잎 한 장. */
+      line(ctx, [0, -87, 0, -95], '#D1F58E', 2.8);
+      ctx.beginPath();
+      ctx.moveTo(0, -94);
+      ctx.bezierCurveTo(2, -100, 10, -99, 11, -97);
+      ctx.bezierCurveTo(9, -91, 3, -91, 0, -94);
+      ctx.fillStyle = '#D1F58E';
+      ctx.fill();
+      oval(ctx, -19, -49, 5, 3, '#FF8A7A');
+      oval(ctx, 19, -49, 5, 3, '#FF8A7A');
+      [-1, 1].forEach(function (side) {
+        var x = side * 11;
+        if (pose === 'oops') {
+          line(ctx, [x - 3, -63, x + 3, -57], ink, 2.8);
+          line(ctx, [x + 3, -63, x - 3, -57], ink, 2.8);
+        } else if (blink || pose === 'cheer') {
+          ctx.beginPath();
+          ctx.moveTo(x - 4, -58);
+          ctx.quadraticCurveTo(x, blink ? -58 : -65, x + 4, -58);
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 2.8;
+          ctx.stroke();
+        } else oval(ctx, x, -60, 3.8, 5, ink);
+      });
+      ctx.beginPath();
+      ctx.moveTo(-4, -48);
+      ctx.quadraticCurveTo(0, mood === 'sad' ? -53 : -42, 4, -48);
+      if (mood === 'happy') {
+        ctx.quadraticCurveTo(0, -36, -4, -48);
+        ctx.fillStyle = ink;
+        ctx.fill();
+        oval(ctx, 0, -43, 2.3, 1.4, '#FF8A7A');
+      } else {
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 2.3;
+        ctx.stroke();
+      }
+      if (o.label !== undefined && o.label !== null && String(o.label)) {
+        oval(ctx, 0, -27, 11, 10, 'rgba(255,255,255,.75)');
+        ctx.fillStyle = ink;
+        ctx.font = "bold 11px 'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(Array.from(String(o.label)).slice(0, 3).join(''), 0, -26, 19);
+      }
+      if (crouch || airborne) {
+        ctx.lineWidth = 2.2;
+        oval(ctx, -17, -12, 8, 7, color, rim);
+        oval(ctx, 17, -12, 8, 7, color, rim);
+      }
+      if (pose === 'cheer') {
+        [-1, 1].forEach(function (s) {
+          line(ctx, [s * 35, -87, s * 40, -92], '#FFD66B', 3);
+          line(ctx, [s * 43, -77, s * 48, -79], '#FFD66B', 3);
+        });
+      }
+      if (pose === 'oops') {
+        ctx.beginPath();
+        for (var j = 0; j <= 24; j++) {
+          var a = j * .39;
+          var r = 1 + j * .17;
+          var px = 38 + Math.cos(a) * r;
+          var py = -83 + Math.sin(a) * r;
+          if (!j) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = '#F4F8FF';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+    } finally { ctx.restore(); }
+  }
+  return { draw: draw, POSES: POSES.slice() };
+})();
+
+</script>
+<script>
+/* 시작 화면 — 「경기 시작」을 누르면 체험판이 돈다, 「처음 화면」이면 멈추고 돌아온다 */
+(function(){
+  var start = document.getElementById("start"), go = document.getElementById("go"), home = document.getElementById("home");
+  go.addEventListener("click", function(){ start.hidden = true; home.hidden = false; window.__startDemo(); });
+  home.addEventListener("click", function(){ window.__stopDemo(); start.hidden = false; home.hidden = true; go.focus(); });
+})();
+</script>
+</body>
+</html>

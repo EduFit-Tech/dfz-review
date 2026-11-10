@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>색깔 띠 잡아 오기 — 디지털 핏 존 게임 리뷰</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#202B3D; --surface:#30435A; --line:#46607E; --ink:#F4F8FF; --muted:#CCDCE9;
+  --lime:#D1F58E; --coral:#FF8A7A; --sun:#FFD66B;
+  --font:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-weight:450;line-height:1.65;font-size:16px}
+main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.2;margin:0 0 8px;font-weight:800}
+h2{font-size:22px;margin:44px 0 12px;font-weight:750;padding-top:8px;border-top:1px solid var(--line)}
+p{margin:0 0 12px}
+a{color:var(--lime)}
+.lead{color:var(--muted);max-width:46em}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
+.chip b{color:var(--lime)}
+code{font-family:Consolas,'D2Coding',Menlo,monospace;font-size:.92em;background:#18212F;border:1px solid var(--line);border-radius:5px;padding:0 5px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:13px;font-weight:700}
+.wrap{overflow-x:auto}
+.demo{background:#141C29;border:1px solid var(--line);border-radius:14px;padding:12px}
+.demo canvas{display:block;width:100%;aspect-ratio:16/9;border-radius:10px;background:#1B2536;touch-action:none;cursor:crosshair}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.controls button{font:inherit;font-weight:650;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 14px;cursor:pointer}
+.controls button[aria-pressed="true"]{background:var(--lime);color:#13202F;border-color:var(--lime)}
+.note{color:var(--muted);font-size:14px}
+.ok{color:var(--lime);font-weight:700}
+.no{color:var(--coral);font-weight:700}
+ol li,ul li{margin-bottom:6px}
+.swatch{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.back{display:inline-block;margin-bottom:14px;font-weight:650;text-decoration:none}
+ul.log{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ul.log li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px}
+ul.log .when{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+ul.log .sha{font-family:Consolas,Menlo,monospace;font-size:14px}
+@media (max-width:640px){ul.log li{grid-template-columns:minmax(0,1fr)}}
+
+.stagewrap{position:relative}
+.start{position:absolute;inset:0;border-radius:10px;background:#1B2536;display:grid;grid-template-columns:1.15fr .85fr;gap:20px;padding:22px 26px;overflow:auto;align-content:start}
+.start[hidden]{display:none}
+.start .eyebrow{color:var(--lime);font-weight:800;font-size:13px;letter-spacing:1px}
+.start h3{font-size:clamp(22px,2.6vw,32px);margin:4px 0 6px;font-weight:800;line-height:1.2}
+.start .lead2{margin:0 0 8px;color:var(--muted);font-size:15px;line-height:1.55}
+.start .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.start .tags span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:650}
+.start .how{background:#141C29;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.start .how b{font-size:14px}
+.start ol{margin:6px 0 0;padding-left:20px;font-size:15px;line-height:1.5}
+.start ol li{margin-bottom:3px}
+.start .set{display:grid;gap:12px;align-content:start}
+.start .set h4{margin:0;font-size:17px;font-weight:800}
+.start .opt>span{display:block;font-weight:700;font-size:14px;margin-bottom:4px;color:var(--muted)}
+.start .opt .controls{margin:0}
+.start .go{font:inherit;font-weight:800;font-size:18px;background:var(--lime);color:#13202F;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+.start .safe{font-size:13px;color:var(--muted);background:#141C29;border:1px solid var(--line);border-radius:10px;padding:8px 10px;line-height:1.5;margin:0}
+@media (max-width:760px){.start{position:static;grid-template-columns:1fr;margin-bottom:10px}}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../">← 목록으로</a>
+  <h1>색깔 띠 잡아 오기</h1>
+  <p class="lead">내 몸 둘레에 색 띠가 떠 있어요. 신호가 부르는 색 띠로 손을 뻗어 먼저 잡는 사람이 1점! 카메라가 손목을 봅니다.</p>
+
+  <!--@REQUEST@-->
+<style>
+.req{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.req-btn{font:inherit;font-weight:700;font-size:14px;background:var(--bg);color:var(--ink);border:1px solid var(--lime);border-radius:999px;padding:5px 14px;cursor:pointer}
+.req-btn:hover{background:var(--lime);color:#13202F}
+.req-mark{font-size:14px;font-weight:650;color:#13202F;background:#FFD66B;border-radius:999px;padding:3px 12px}
+.req-mark.done{background:var(--lime)}
+.req-soon{font-size:14px;color:var(--muted)}
+dialog.req-dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(520px,92vw)}
+dialog.req-dlg::backdrop{background:rgba(10,16,26,.6)}
+.req-dlg h3{margin:0 0 4px}
+.req-dlg label{display:grid;gap:4px;margin-top:12px;font-weight:650;font-size:14px;color:var(--muted)}
+.req-dlg .hint{font-weight:450;font-size:13px}
+.req-dlg input,.req-dlg textarea{font:inherit;font-weight:450;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.req-dlg textarea{min-height:130px;resize:vertical}
+.req-dlg .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;align-items:center}
+.req-dlg .row button{font:inherit;font-weight:700;border-radius:10px;padding:8px 16px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.req-dlg .row button.send{background:var(--lime);color:#13202F;border-color:var(--lime)}
+.req-dlg .msg{margin-right:auto;font-size:14px;color:#FFB4A8}
+</style>
+<div class="req" data-slug="color-band" data-title="색깔 띠 잡아 오기" data-page="games/color-band.html" style="margin:14px 0 0"><span class="req-soon">의견 받기는 준비 중입니다.</span></div>
+<!--@/REQUEST@-->
+
+  <h2>바뀐 기록</h2>
+  <!--@HISTORY@-->
+<ul class="log">
+<li><span class="when">2026-11-06 10:31</span><span>배경 그림 — 무지개 리본·풍선 아치로 꾸민 실내 체육관(앱 무궁화 마당과 같은 손그림 화풍, GPT 생성). 그림이 없으면 지금처럼 밤하늘, 체험판에도 깔림</span></li>
+<li><span class="when">2026-11-03 22:46</span><span>사람을 콩콩이로 — 팔만 실제 손목까지 고무팔</span></li>
+<li><span class="when">2026-11-03 22:36</span><span>정원 4명 → 3명(4명이면 띠가 38%까지 줄어듦)</span></li>
+<li><span class="when">2026-11-03 22:28</span><span>처음 변환 — 1~4명 동시, 카메라 손목으로 잡기, 기본·함정 신호</span></li>
+</ul>
+<!--@/HISTORY@-->
+
+  <h2>직접 해 보기</h2>
+  <!--start-screen-->
+<p>C# 판정과 같은 숫자(띠 자리, 띠 크기, 잡는 시간 0.3초, 신호 뒤 0.25초 무시, 준비 1~3초, 신호 6초, 결과 2.1초)로 움직이는 축소판입니다. <b>시작 화면</b>에서 인원과 신호를 고르고 시작합니다. 경기가 돌면 마우스(또는 손가락)가 <b>가장 가까운 사람의 손목</b>입니다. 신호가 부르는 색 띠에 손을 대고 하얀 원이 찰 때까지 멈추세요. ★ 원본 HTML 파일이 이 컴퓨터에 없어, 시작 화면은 원본 모양이 아니라 앱판 규칙으로 썼습니다.</p>
+  <div class="demo">
+    <div class="stagewrap">
+      <canvas id="cv" width="1280" height="720" aria-label="색깔 띠 잡아 오기 체험판"></canvas>
+      <div class="start" id="start">
+        <div>
+          <div class="eyebrow">체육 · 반응 놀이 · 1~3명</div>
+          <h3>색깔 띠 잡아 오기</h3>
+          <p class="lead2">내 몸 둘레에 색 띠가 떠 있어요. 신호가 부르는 색 띠로 손을 뻗어 먼저 잡는 사람이 1점! 카메라가 손목을 봅니다.</p>
+          <div class="how"><b>진행 방법</b>
+            <ol>
+              <li>준비 때는 손을 내리고 기다립니다.</li>
+              <li>신호가 뜨면 그 색 띠로 손을 뻗어 하얀 원이 다 찰 때까지 멈춥니다.</li>
+              <li>먼저 잡은 사람이 1점. 다른 색을 잡으면 그 문제는 잠깁니다.</li>
+              <li>함정 신호는 「글자 색깔」·「글자 읽기」 규칙을 먼저 보여 줍니다.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="set">
+          <h4>경기 설정</h4>
+          <div class="opt"><span>인원</span><div class="controls">
+            <button type="button" data-n="1" aria-pressed="true">1명</button>
+            <button type="button" data-n="2" aria-pressed="false">2명</button>
+            <button type="button" data-n="3" aria-pressed="false">3명</button>
+          </div></div>
+          <div class="opt"><span>신호</span><div class="controls">
+            <button type="button" data-mode="basic" aria-pressed="true">기본 (색)</button>
+            <button type="button" data-mode="trap" aria-pressed="false">함정 (글자와 색이 다름)</button>
+          </div></div>
+          <button class="go" id="go">게임 시작 →</button>
+          <p class="safe"><b>안전</b> 옆 사람과 팔을 벌려도 닿지 않게 떨어져 서기 · 준비 중에는 손을 내리기</p>
+        </div>
+      </div>
+    </div>
+    <div class="controls"><button type="button" id="home" hidden>처음 화면</button></div>
+    <p class="note" style="margin:8px 0 0">인원을 늘리면 이웃과 겹치지 않게 띠가 작아지고 몸에 가까워지는 것을 볼 수 있습니다. 신호가 뜰 때 이미 띠 위에 있던 손은 한 번 빼야 잡힙니다.</p>
+  </div>
+
+  <h2>원본에서 달라진 것</h2>
+  <div class="wrap"><table>
+    <tr><th>HTML판</th><th>앱판</th><th>까닭</th></tr>
+    <tr><td>1:1 대결, 화면 좌우 두 칸, 도전자 교대</td><td>1~3명이 함께, 띠는 각자 몸 둘레, 먼저 잡은 사람 1점</td><td>앱은 개인 점수제. 기획 결정</td></tr>
+    <tr><td>카메라 영상의 움직임(장면 차이)으로 판정</td><td>골격의 손목 좌표가 띠 안에 0.3초 머물면 잡기</td><td>뒤에서 움직이는 학생에게 잡히지 않음</td></tr>
+    <tr><td>카메라 / 리모컨·게임패드</td><td>카메라만</td><td>기획 결정</td></tr>
+    <tr><td>음성+색 / 음성만 / 함정</td><td>기본 · 함정 신호(규칙이 문제마다 바뀜) 두 게임</td><td>앱에 글자를 읽어 주는 음성이 없음</td></tr>
+    <tr><td>문제 수 5·7·10</td><td>판 시간 90초 동안 계속</td><td>앱은 시간제 판</td></tr>
+    <tr><td>누군가 잡을 때까지 신호 유지</td><td>6초 지나면 「아무도 못 잡았어요」</td><td>가정 — 한 문제에 묶이지 않게</td></tr>
+    <tr><td>카메라 영상 위에 띠</td><td>영상 없이 학년별 게임의 캐릭터 「콩콩이」를 그 사람 색으로, 팔은 실제 손목까지 늘어나는 고무팔</td><td>카메라 프레임을 화면 밖으로 내지 않음. 손 위치가 보여야 뻗음</td></tr>
+    <tr><td>(없음)</td><td>신호 때 이미 띠에 있던 손은 나갔다 와야 셈</td><td>손목 좌표라 대고 기다리면 잡혀서</td></tr>
+  </table></div>
+
+  <h2>실물에서 봐 주셨으면 하는 것</h2>
+  <ul>
+    <li>손목 좌표가 화면 좌우와 맞는지(거울 동작). 골격이 다른 카메라 무대와 같은 화면 좌표(왼쪽 0, 바닥 0)라고 가정했습니다.</li>
+    <li>띠 자리(몸통 길이의 1~1.5배)가 초등학생 팔에 맞는지.</li>
+    <li>잡는 시간 0.3초와 신호 뒤 0.25초가 카메라 지연에서 억울하지 않은지.</li>
+    <li>셋이 나란히 서도 띠가 너무 작지 않은지. 고르게 서고 몸통이 화면 높이의 0.24라면 띠 크기와 거리가 2명 63%, 3명 47%로 줄어듭니다. 처음엔 정원이 4명이었는데 4명이면 38%까지 줄어 팔을 다 뻗지 않아도 닿아서 3명으로 줄였습니다.</li>
+  </ul>
+</main>
+
+<script>
+/* 콩콩이 — HRYoon0/dfz templates/buddy.js, 팔 끄기(arms: false)만 더함 */
+var Buddy = (function () {
+  'use strict';
+  var POSES = ['idle', 'raise', 'squat', 'jump', 'lean', 'cheer', 'oops'];
+  var ink = '#13202F';
+  var rim = 'rgba(255,255,255,.55)';
+  function oval(c, x, y, rx, ry, fill, edge) {
+    c.beginPath();
+    c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    c.fillStyle = fill;
+    c.fill();
+    if (edge) { c.strokeStyle = edge; c.stroke(); }
+  }
+  function line(c, points, color, width) {
+    c.beginPath();
+    c.moveTo(points[0], points[1]);
+    for (var i = 2; i < points.length; i += 2) c.lineTo(points[i], points[i + 1]);
+    c.strokeStyle = color;
+    c.lineWidth = width;
+    c.stroke();
+  }
+  function body(c) {
+    c.beginPath();
+    c.moveTo(-29, -48);
+    c.bezierCurveTo(-29, -73, -15, -87, 1, -87);
+    c.bezierCurveTo(21, -87, 30, -69, 29, -51);
+    c.bezierCurveTo(39, -24, 23, -9, 1, -10);
+    c.bezierCurveTo(-24, -8, -39, -23, -29, -48);
+    c.closePath();
+  }
+  /* 발바닥 중앙이 원점인 높이 100의 설계 좌표. 모든 변형은 호출 안에서 복원한다. */
+  function draw(ctx, o) {
+    o = o || {};
+    var size = Number(o.size);
+    if (!(size > 0) || !isFinite(size)) return;
+    var pose = POSES.indexOf(o.pose) >= 0 ? o.pose : 'idle';
+    var t = typeof o.t === 'number' && isFinite(o.t) ? o.t : 0;
+    var color = o.color || '#D1F58E';
+    var mood = o.mood || (pose === 'oops' ? 'sad' : pose === 'idle' || pose === 'lean' || pose === 'squat' ? 'calm' : 'happy');
+    var breath = Math.sin(t / 650) * .012;
+    var blink = t > 0 && t % 3900 > 3750;
+    var crouch = pose === 'squat';
+    var airborne = pose === 'jump';
+    var angle = pose === 'lean' ? Math.max(-1, Math.min(1, Number(o.lean) || 0)) * .32 : pose === 'oops' ? Math.sin(t / 180) * .045 : 0;
+    ctx.save();
+    try {
+      ctx.translate(Number(o.x) || 0, Number(o.y) || 0);
+      ctx.scale(size / 100, size / 100);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.translate(0, airborne ? -10 - (1 + Math.sin(t / 240)) * 2 : 0);
+      ctx.rotate(angle);
+      ctx.scale(crouch ? 1.12 : 1 - breath / 2, crouch ? .73 : 1 + breath);
+      ctx.lineWidth = 2.2;
+      oval(ctx, -15, -6, 9, 5, color, rim);
+      oval(ctx, 15, -6, 9, 5, color, rim);
+      /* 팔은 몸 뒤에서 연결하고 둥근 끝을 사용한다. */
+      var lifted = pose === 'raise' || pose === 'cheer' || airborne;
+      if (o.arms !== false) [-1, 1].forEach(function (side) {
+        var endY = lifted ? (pose === 'raise' ? -80 : -68) : crouch ? -22 : -30;
+        line(ctx, [side * 25, -48, side * 39, endY], rim, 13);
+        line(ctx, [side * 25, -48, side * 39, endY], color, 9);
+      });
+      body(ctx);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.save();
+      try {
+        ctx.clip();
+        oval(ctx, 0, -10, 38, 12, 'rgba(0,0,0,.18)');
+      } finally { ctx.restore(); }
+      body(ctx);
+      ctx.strokeStyle = rim;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      /* 짧은 새싹 한 개와 잎 한 장. */
+      line(ctx, [0, -87, 0, -95], '#D1F58E', 2.8);
+      ctx.beginPath();
+      ctx.moveTo(0, -94);
+      ctx.bezierCurveTo(2, -100, 10, -99, 11, -97);
+      ctx.bezierCurveTo(9, -91, 3, -91, 0, -94);
+      ctx.fillStyle = '#D1F58E';
+      ctx.fill();
+      oval(ctx, -19, -49, 5, 3, '#FF8A7A');
+      oval(ctx, 19, -49, 5, 3, '#FF8A7A');
+      [-1, 1].forEach(function (side) {
+        var x = side * 11;
+        if (pose === 'oops') {
+          line(ctx, [x - 3, -63, x + 3, -57], ink, 2.8);
+          line(ctx, [x + 3, -63, x - 3, -57], ink, 2.8);
+        } else if (blink || pose === 'cheer') {
+          ctx.beginPath();
+          ctx.moveTo(x - 4, -58);
+          ctx.quadraticCurveTo(x, blink ? -58 : -65, x + 4, -58);
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 2.8;
+          ctx.stroke();
+        } else oval(ctx, x, -60, 3.8, 5, ink);
+      });
+      ctx.beginPath();
+      ctx.moveTo(-4, -48);
+      ctx.quadraticCurveTo(0, mood === 'sad' ? -53 : -42, 4, -48);
+      if (mood === 'happy') {
+        ctx.quadraticCurveTo(0, -36, -4, -48);
+        ctx.fillStyle = ink;
+        ctx.fill();
+        oval(ctx, 0, -43, 2.3, 1.4, '#FF8A7A');
+      } else {
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 2.3;
+        ctx.stroke();
+      }
+      if (o.label !== undefined && o.label !== null && String(o.label)) {
+        oval(ctx, 0, -27, 11, 10, 'rgba(255,255,255,.75)');
+        ctx.fillStyle = ink;
+        ctx.font = "bold 11px 'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(Array.from(String(o.label)).slice(0, 3).join(''), 0, -26, 19);
+      }
+      if (crouch || airborne) {
+        ctx.lineWidth = 2.2;
+        oval(ctx, -17, -12, 8, 7, color, rim);
+        oval(ctx, 17, -12, 8, 7, color, rim);
+      }
+      if (pose === 'cheer') {
+        [-1, 1].forEach(function (s) {
+          line(ctx, [s * 35, -87, s * 40, -92], '#FFD66B', 3);
+          line(ctx, [s * 43, -77, s * 48, -79], '#FFD66B', 3);
+        });
+      }
+      if (pose === 'oops') {
+        ctx.beginPath();
+        for (var j = 0; j <= 24; j++) {
+          var a = j * .39;
+          var r = 1 + j * .17;
+          var px = 38 + Math.cos(a) * r;
+          var py = -83 + Math.sin(a) * r;
+          if (!j) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = '#F4F8FF';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+    } finally { ctx.restore(); }
+  }
+  return { draw: draw, POSES: POSES.slice() };
+})();
+
+</script>
+<script>
+/* 시작 화면 — 「경기 시작」을 누르면 체험판이 돈다, 「처음 화면」이면 멈추고 돌아온다 */
+(function(){
+  var start = document.getElementById("start"), go = document.getElementById("go"), home = document.getElementById("home");
+  go.addEventListener("click", function(){ start.hidden = true; home.hidden = false; window.__startDemo(); });
+  home.addEventListener("click", function(){ window.__stopDemo(); start.hidden = false; home.hidden = true; go.focus(); });
+})();
+</script>
+</body>
+</html>
