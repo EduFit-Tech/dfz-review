@@ -116,7 +116,10 @@ REQUEST_JS = """
       if (o.reply) d.appendChild(line('op-reply', '팀의 답: ' + o.reply));
       box.appendChild(d); });
   }
-  function load(){ fetchJSON(URL_ + '?action=list').then(function(r){ if (r && r.ok) Object.keys(r.items).forEach(function(k){ mark(k, r.items[k]); render(k, r.items[k]); }); }).catch(function(){}); }
+  function hint(mode){ var h = document.querySelector('#req-dlg .when-public'); if (h) h.textContent = mode === 'now'
+    ? '보내면 바로 이 페이지에 공개됩니다. 실명·연락처·학생 이야기는 적지 마세요.'
+    : '보내신 의견은 팀이 확인한 뒤 이 페이지에 공개될 수 있습니다. 실명·연락처·학생 이야기는 적지 마세요.'; }
+  function load(){ fetchJSON(URL_ + '?action=list').then(function(r){ if (r && r.ok) { hint(r.mode); } if (r && r.ok) Object.keys(r.items).forEach(function(k){ mark(k, r.items[k]); render(k, r.items[k]); }); }).catch(function(){}); }
   var dlg = document.getElementById('req-dlg'), form = dlg.querySelector('form'), msg = dlg.querySelector('.msg'), send = dlg.querySelector('.send'), W = form.elements, cur = null;
   document.querySelectorAll('.req-btn').forEach(function(b){ b.addEventListener('click', function(){
     cur = b.closest('.req').dataset; dlg.querySelector('.game').textContent = cur.title; msg.textContent = ''; send.disabled = false; send.textContent = '보내기';
@@ -147,7 +150,7 @@ REQUEST_DIALOG = """<dialog class="req-dlg" id="req-dlg" aria-labelledby="req-h"
 <form method="dialog">
 <h3 id="req-h">의견 보내기</h3>
 <div class="game" style="font-weight:700"></div>
-<p class="hint" style="margin:8px 0 0;font-size:13px;color:var(--muted)">보내신 의견은 팀이 확인한 뒤 이 페이지에 공개될 수 있습니다. 실명·연락처·학생 이야기는 적지 마세요.</p>
+<p class="hint when-public" style="margin:8px 0 0;font-size:13px;color:var(--muted)">보내신 의견은 이 페이지에 공개됩니다. 실명·연락처·학생 이야기는 적지 마세요.</p>
 <label>보내는 사람(선택)<span class="hint">별명이나 소속만 적어 주세요. 실명·연락처는 적지 마세요.</span><input name="who" maxlength="40" autocomplete="off"></label>
 <label>의견<textarea name="note" maxlength="1000" required placeholder="좋은 점, 고칠 점, 궁금한 점을 적어 주세요"></textarea></label>
 <div class="row"><span class="msg" role="status"></span><button type="button" class="cancel">취소</button><button type="submit" class="send">보내기</button></div>
@@ -248,7 +251,7 @@ def build_index():
 <body>
 <main>
 <h1>디지털 핏 존 개발 리뷰</h1>
-<p class="lead">디지털 핏 존 팀이 만들고 고치는 것을 보고 의견을 주시는 곳입니다. 항목마다 무엇이 달라지는지 적었고, 게임은 브라우저에서 해 보는 체험판이 있습니다. 「반영 전」은 만들었지만 아직 반영하지 않은 것이고 「반영됨」은 이미 반영한 것입니다. 반영 전 항목은 의견을 반영하기 쉽습니다. 의견이 있으면 항목의 「의견 보내기」를 눌러 주세요. 보내신 내용은 개발 팀만 보고, 이 팀이 확인한 의견은 항목 아래에 공개되고, 그 밖의 의견은 들어온 날짜와 건수만 표시됩니다. 체험판은 앱과 같은 규칙으로 따로 만든 것이라 그림과 조작이 실제 앱과 조금 다를 수 있습니다.</p>
+<p class="lead">디지털 핏 존 팀이 만들고 고치는 것을 보고 의견을 주시는 곳입니다. 항목마다 무엇이 달라지는지 적었고, 게임은 브라우저에서 해 보는 체험판이 있습니다. 「반영 전」은 만들었지만 아직 반영하지 않은 것이고 「반영됨」은 이미 반영한 것입니다. 반영 전 항목은 의견을 반영하기 쉽습니다. 의견이 있으면 항목의 「의견 보내기」를 눌러 주세요. 보내신 의견은 항목 아래에 공개됩니다. 체험판은 앱과 같은 규칙으로 따로 만든 것이라 그림과 조작이 실제 앱과 조금 다를 수 있습니다.</p>
 <div class="search"><input type="search" id="q" placeholder="찾기 — 게임 이름, 낱말" aria-label="항목 찾기"><span class="count" id="q-count"></span></div>
 <div class="chips" data-kind="area">{area_chips}</div>
 <div class="chips" data-kind="state">{state_chips}</div>
