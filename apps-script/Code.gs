@@ -4,10 +4,12 @@
  *
  * - POST(본문 JSON, text/plain): { slug, title, page, name, text } → 탭 「의견」에 한 줄. 답 { ok, at }.
  * - GET ?action=list: 항목마다 의견 수·마지막 시각·처리 상태, 그리고 **팀이 공개로 표시한 의견만**.
- *     답 { ok, items: { slug: { count, last, status, public: [ { at, name, text, status, reply } ] } } }
+ *     답 { ok, mode, items: { slug: { count, last, status, public: [ { at, name, text, status, reply } ] } } }
  *
- * ★ 공개 규칙: 시트의 「공개」 칸에 「공개」라고 적은 줄만 페이지에 나간다. 비어 있으면 건수만 센다.
- *   받는 즉시 공개하지 않는다 — 로그인이 없어 누구나 아무 이름으로 쓸 수 있기 때문이다.
+ * ★ 공개 규칙은 스크립트 속성 PUBLISH가 정한다(코드를 고치거나 다시 배포하지 않고 바꾼다).
+ *   - `바로`  : 받은 의견을 바로 내보낸다. 시트의 「공개」 칸에 `숨김`이라고 적은 줄만 뺀다.
+ *   - 그 밖(비어 있음·`확인`): 「공개」 칸에 `공개`라고 적은 줄만 내보낸다. 나머지는 건수만 센다.
+ *   로그인이 없어 누구나 아무 이름으로 쓸 수 있다 — `바로`일 때는 시트를 가끔 보고 `숨김`으로 내린다.
  * ★ 시트 ID는 코드에 두지 않는다(이 파일은 공개 저장소에 있다). 스크립트 속성 SHEET_ID에 넣는다.
  * ★ 익명 웹앱(실행: 나 / 액세스: 모든 사용자)이라 고급 Sheets 서비스(Sheets v4)를 쓴다.
  * ★ 쓰기는 LockService로 줄 세우고, 조회는 CacheService로 20초 묶는다(쓰면 지운다).
@@ -19,6 +21,7 @@ var HEAD = ['보낸 시각', '항목 ID', '항목 제목', '보낸 사람', '의
 var LIST_KEY = 'list-v2';
 var LIMIT_PER_10MIN = 30;
 var PUBLIC_WORD = '공개';
+var HIDE_WORD = '숨김';
 var PUBLIC_MAX_PER_ITEM = 50;
 var PAGE_PREFIX = /^https:\/\/edufit-tech\.github\.io\/dfz-review\//;
 
@@ -45,8 +48,20 @@ function buildRow(p, at) {
   return { ok: true, row: [at, slug, title, name || '(이름 없음)', text, page, '', '', ''] };
 }
 
+/** 스크립트 속성 PUBLISH → 'now'(바로 공개) 또는 'review'(확인 뒤 공개). 모르는 값은 조심스러운 쪽. */
+function publishMode() {
+  var v = String(PropertiesService.getScriptProperties().getProperty('PUBLISH') || '').trim();
+  return v === '바로' ? 'now' : 'review';
+}
+
+/** 「공개」 칸의 글과 방식 → 이 줄을 내보내는가. 순수 함수(검사용). */
+function isShown(mark, mode) {
+  mark = String(mark || '').trim();
+  return mode === 'now' ? mark !== HIDE_WORD : mark === PUBLIC_WORD;
+}
+
 /** 시트 줄들 → 항목마다 요약. 순수 함수(검사용). 시각은 「yyyy-MM-dd HH:mm」 글이라 글자 비교가 시간 비교다. */
-function summarize(rows) {
+function summarize(rows, mode) {
   var items = {};
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i] || [];
@@ -56,7 +71,7 @@ function summarize(rows) {
     var g = items[slug] || (items[slug] = { count: 0, last: '', status: '', public: [] });
     g.count++;
     if (at >= g.last) { g.last = at; g.status = String(r[6] || ''); }
-    if (String(r[7] || '').trim() === PUBLIC_WORD) {
+    if (isShown(r[7], mode)) {
       g.public.push({
         at: at.slice(0, 10),                       // 날짜만 — 분 단위 시각은 내보내지 않는다
         name: String(r[3] || '').slice(0, 40),
@@ -78,10 +93,11 @@ function doGet(e) {
   var action = e && e.parameter && e.parameter.action;
   if (action !== 'list') return json({ ok: false, error: 'unknown-action' });
   try {
-    var cached = cacheGet(LIST_KEY);
+    var mode = publishMode();
+    var cached = cacheGet(LIST_KEY + mode);
     if (cached) return json(cached);
-    var res = { ok: true, items: summarize(readRows()) };
-    cachePut(LIST_KEY, res, 20);
+    var res = { ok: true, mode: mode, items: summarize(readRows(), mode) };
+    cachePut(LIST_KEY + mode, res, 20);
     return json(res);
   } catch (err) {
     return json({ ok: false, error: 'read-failed' });
@@ -105,7 +121,7 @@ function doPost(e) {
     ensureTab();
     Sheets.Spreadsheets.Values.append({ values: [built.row] }, sheetId(), "'" + TAB + "'!A1",
       { valueInputOption: 'RAW', insertDataOption: 'INSERT_ROWS' });
-    CacheService.getScriptCache().remove(LIST_KEY);
+    CacheService.getScriptCache().removeAll([LIST_KEY + 'now', LIST_KEY + 'review']);
     return json({ ok: true, at: at });
   } catch (err) {
     return json({ ok: false, error: 'write-failed' });
